@@ -1,39 +1,23 @@
 package de.howaner.FramePicture.util;
 
 import de.howaner.FramePicture.FramePicturePlugin;
-import io.netty.channel.Channel;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.util.logging.Level;
-import net.minecraft.server.v1_8_R3.EntityItemFrame;
-import net.minecraft.server.v1_8_R3.NetworkManager;
-import net.minecraft.server.v1_8_R3.Packet;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftItemFrame;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 public class Utils {
 
   public static void setFrameItemWithoutSending(ItemFrame entity, ItemStack item) {
-    EntityItemFrame nmsEntity = ((CraftItemFrame) entity).getHandle();
-
-    net.minecraft.server.v1_8_R3.ItemStack nmsStack = CraftItemStack.asNMSCopy(item);
-    if (nmsStack != null) {
-      nmsStack.count = 1;
-      nmsStack.a(nmsEntity);
-    }
-
-    nmsEntity.getDataWatcher().watch(8, nmsStack);
+    entity.setItem(item);
   }
 
   public static ItemFrame getItemFrameFromChunk(Chunk chunk, Location loc, BlockFace face) {
@@ -58,19 +42,6 @@ public class Utils {
     if ((x < 0) || (y < 0) || (x >= 128) || (y >= 128)) return buffer;
     buffer[(y * 128 + x)] = color;
     return buffer;
-  }
-
-  public static void sendPacketFast(Player player, Packet<?> packet) {
-    try {
-      NetworkManager netty = ((CraftPlayer) player).getHandle().playerConnection.networkManager;
-      Field field = NetworkManager.class.getDeclaredField("channel");
-      field.setAccessible(true);
-      Channel channel = (Channel) field.get(netty);
-
-      channel.writeAndFlush(packet);
-    } catch (Exception e) {
-      FramePicturePlugin.log.log(Level.WARNING, "Cant't send packet", e);
-    }
   }
 
   public static BufferedImage scaleImage(BufferedImage image, int width, int height) {

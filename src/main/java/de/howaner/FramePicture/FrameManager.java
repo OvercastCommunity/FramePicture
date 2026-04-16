@@ -19,10 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import net.minecraft.server.v1_8_R3.EntityPlayer;
-import net.minecraft.server.v1_8_R3.EntityTracker;
-import net.minecraft.server.v1_8_R3.EntityTrackerEntry;
-import net.minecraft.server.v1_8_R3.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -31,7 +27,6 @@ import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -164,15 +159,7 @@ public class FrameManager {
 
   public void sendFrame(Frame frame) {
     if (!frame.isLoaded()) return;
-    ItemFrame entity = frame.getEntity();
-
-    WorldServer worldServer = ((CraftWorld) entity.getWorld()).getHandle();
-    EntityTracker tracker = worldServer.tracker;
-    EntityTrackerEntry trackerEntry = tracker.trackedEntities.d(entity.getEntityId());
-    if (trackerEntry == null) return;
-
-    for (EntityPlayer playerNMS : trackerEntry.trackedPlayers) {
-      Player player = playerNMS.getBukkitEntity();
+    for (Player player : frame.getEntity().getWorld().getPlayers()) {
       frame.sendTo(player);
     }
   }

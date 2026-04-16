@@ -1,23 +1,21 @@
 package de.howaner.FramePicture.util;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMapData;
 import de.howaner.FramePicture.FramePicturePlugin;
 import de.howaner.FramePicture.render.ImageRenderer;
 import de.howaner.FramePicture.render.TextRenderer;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
-import net.minecraft.server.v1_8_R3.DataWatcher;
-import net.minecraft.server.v1_8_R3.EntityItemFrame;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
-import net.minecraft.server.v1_8_R3.PacketPlayOutMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftItemFrame;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
-import org.bukkit.craftbukkit.v1_8_R3.map.RenderData;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -29,8 +27,8 @@ public class Frame {
   private final BlockFace face;
   private final Location loc;
   private final String picture;
-  private PacketPlayOutEntityMetadata cachedItemPacket = null;
-  private PacketPlayOutMap cachedDataPacket = null;
+  private WrapperPlayServerEntityMetadata cachedItemPacket = null;
+  private WrapperPlayServerMapData cachedDataPacket = null;
 
   public Frame(final int id, String picture, Location loc, BlockFace face) {
     this.id = id;
@@ -85,24 +83,17 @@ public class Frame {
     return image;
   }
 
-  private RenderData getRenderData() {
-    RenderData render = new RenderData();
+  private byte[] getRenderBuffer() {
     MapRenderer mapRenderer = this.generateRenderer();
-
-    Arrays.fill(render.buffer, (byte) 0);
-    render.cursors.clear();
-
-    FakeMapCanvas canvas = new FakeMapCanvas();
-    canvas.setBase(render.buffer);
+    SimpleMapCanvas canvas = new SimpleMapCanvas();
     mapRenderer.render(canvas.getMapView(), canvas, null);
-
     byte[] buf = canvas.getBuffer();
+    byte[] result = new byte[buf.length];
     for (int i = 0; i < buf.length; i++) {
       byte color = buf[i];
-      if ((color >= 0) || (color <= -113)) render.buffer[i] = color;
+      if ((color >= 0) || (color <= -113)) result[i] = color;
     }
-
-    return render;
+    return result;
   }
 
   public void sendTo(Player player) {
@@ -114,33 +105,28 @@ public class Frame {
     if (!this.isLoaded()) return;
 
     if (this.cachedItemPacket == null) {
-      final EntityItemFrame entity = ((CraftItemFrame) this.entity).getHandle();
-
       ItemStack item = new ItemStack(Material.MAP);
       item.setDurability(this.getMapId());
 
-      net.minecraft.server.v1_8_R3.ItemStack nmsItem = CraftItemStack.asNMSCopy(item);
-      nmsItem.count = 1;
-      nmsItem.a(entity);
+      List<EntityData<?>> metadata = new ArrayList<>();
+      metadata.add(
+          new EntityData<>(
+              8, EntityDataTypes.ITEMSTACK, SpigotConversionUtil.fromBukkitItemStack(item)));
 
-      DataWatcher watcher = new DataWatcher(entity);
-      watcher.a(8, nmsItem);
-      watcher.a(3, (byte) 0);
-      watcher.update(8);
-
-      this.cachedItemPacket = new PacketPlayOutEntityMetadata(entity.getId(), watcher, false);
+      this.cachedItemPacket =
+          new WrapperPlayServerEntityMetadata(this.entity.getEntityId(), metadata);
     }
 
     if (player != null)
-      ((CraftPlayer) player).getHandle().playerConnection.sendPacket(this.cachedItemPacket);
+      PacketEvents.getAPI().getPlayerManager().sendPacket(player, this.cachedItemPacket);
   }
 
   private void sendMapData(Player player) {
     if (this.cachedDataPacket == null) {
-      RenderData data = this.getRenderData();
+      byte[] data = this.getRenderBuffer();
       this.cachedDataPacket =
-          new PacketPlayOutMap(
-              this.getMapId(), (byte) 3, new ArrayList<>(), data.buffer, 0, 0, 128, 128);
+          new WrapperPlayServerMapData(
+              this.getMapId(), (byte) 3, false, false, null, 128, 128, 0, 0, data);
     }
 
     if (player != null) PacketSender.addPacketToQueue(player, this.cachedDataPacket);

@@ -1,8 +1,9 @@
 package de.howaner.FramePicture.util;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMapData;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import net.minecraft.server.v1_8_R3.Packet;
 import org.bukkit.entity.Player;
 
 public class PacketSender implements Runnable {
@@ -15,7 +16,7 @@ public class PacketSender implements Runnable {
       QueuedPacket packet = queue.poll();
       if (!packet.player.isOnline()) return;
 
-      Utils.sendPacketFast(packet.player, packet.packet);
+      PacketEvents.getAPI().getPlayerManager().sendPacket(packet.player, packet.packet);
     }
   }
 
@@ -25,15 +26,15 @@ public class PacketSender implements Runnable {
     }
   }
 
-  public static void addPacketToQueue(Player player, Packet<?> packet) {
+  public static void addPacketToQueue(Player player, WrapperPlayServerMapData packet) {
     queue.add(new QueuedPacket(player, packet));
   }
 
   private static class QueuedPacket {
     public Player player;
-    public Packet<?> packet;
+    public WrapperPlayServerMapData packet;
 
-    public QueuedPacket(Player player, Packet<?> packet) {
+    public QueuedPacket(Player player, WrapperPlayServerMapData packet) {
       this.player = player;
       this.packet = packet;
     }
