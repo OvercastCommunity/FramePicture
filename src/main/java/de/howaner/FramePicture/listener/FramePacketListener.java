@@ -21,94 +21,97 @@ import org.bukkit.plugin.Plugin;
 
 public class FramePacketListener implements PacketListener {
 
-	@Override
-	public void onPacketSending(PacketEvent pe) {
-		if (pe.getPacketType() == PacketType.Play.Server.SPAWN_ENTITY) {
-			PacketContainer packet = pe.getPacket();
-			final Player player = pe.getPlayer();
-			
-			int entityID = packet.getIntegers().read(0);
-			Location loc = new Location(
-					player.getWorld(),
-					((double)packet.getIntegers().read(1) / 32.0D),
-					((double)packet.getIntegers().read(2) / 32.0D),
-					((double)packet.getIntegers().read(3) / 32.0D)
-			);
-			int entityType = packet.getIntegers().read(9);
-			int direction = packet.getIntegers().read(10);
+  @Override
+  public void onPacketSending(PacketEvent pe) {
+    if (pe.getPacketType() == PacketType.Play.Server.SPAWN_ENTITY) {
+      PacketContainer packet = pe.getPacket();
+      final Player player = pe.getPlayer();
 
-			// Check if the entity is a item frame (Id 71)
-			if (entityType != 71) {
-				return;
-			}
+      int entityID = packet.getIntegers().read(0);
+      Location loc =
+          new Location(
+              player.getWorld(),
+              ((double) packet.getIntegers().read(1) / 32.0D),
+              ((double) packet.getIntegers().read(2) / 32.0D),
+              ((double) packet.getIntegers().read(3) / 32.0D));
+      int entityType = packet.getIntegers().read(9);
+      int direction = packet.getIntegers().read(10);
 
-			Chunk chunk = loc.getChunk();
-			if (!chunk.isLoaded()) {
-				return;
-			}
+      // Check if the entity is a item frame (Id 71)
+      if (entityType != 71) {
+        return;
+      }
 
-			Frame frame = FramePicturePlugin.getManager().getFrameWithEntityID(chunk, entityID);
-			if (frame == null) {
-				// Search the frame in the chunk.
-				BlockFace facing = this.convertDirectionToBlockFace(direction);
-				ItemFrame entity = Utils.getItemFrameFromChunk(chunk, loc, facing);
-				if (entity == null) {
-					return;
-				}
+      Chunk chunk = loc.getChunk();
+      if (!chunk.isLoaded()) {
+        return;
+      }
 
-				frame = FramePicturePlugin.getManager().getFrame(loc, facing);
-				if (frame == null) {
-					return;
-				}
-				frame.setEntity(entity);
-			}
+      Frame frame = FramePicturePlugin.getManager().getFrameWithEntityID(chunk, entityID);
+      if (frame == null) {
+        // Search the frame in the chunk.
+        BlockFace facing = this.convertDirectionToBlockFace(direction);
+        ItemFrame entity = Utils.getItemFrameFromChunk(chunk, loc, facing);
+        if (entity == null) {
+          return;
+        }
 
-			final Frame frameToSend = frame;
-			Bukkit.getScheduler().runTaskLater(FramePicturePlugin.getPlugin(), new Runnable() {
-				@Override
-				public void run() {
-					frameToSend.sendTo(player);
-				}
-			}, 10L);
-		}
-	}
+        frame = FramePicturePlugin.getManager().getFrame(loc, facing);
+        if (frame == null) {
+          return;
+        }
+        frame.setEntity(entity);
+      }
 
-	private BlockFace convertDirectionToBlockFace(int direction) {
-		switch (direction) {
-			case 0:
-				return BlockFace.SOUTH;
-			case 1:
-				return BlockFace.WEST;
-			case 2:
-				return BlockFace.NORTH;
-			case 3:
-				return BlockFace.EAST;
-			default:
-				return BlockFace.NORTH;
-		}
-	}
+      final Frame frameToSend = frame;
+      Bukkit.getScheduler()
+          .runTaskLater(
+              FramePicturePlugin.getPlugin(),
+              new Runnable() {
+                @Override
+                public void run() {
+                  frameToSend.sendTo(player);
+                }
+              },
+              10L);
+    }
+  }
 
-	@Override
-	public void onPacketReceiving(PacketEvent pe) { }
+  private BlockFace convertDirectionToBlockFace(int direction) {
+    switch (direction) {
+      case 0:
+        return BlockFace.SOUTH;
+      case 1:
+        return BlockFace.WEST;
+      case 2:
+        return BlockFace.NORTH;
+      case 3:
+        return BlockFace.EAST;
+      default:
+        return BlockFace.NORTH;
+    }
+  }
 
-	@Override
-	public ListeningWhitelist getSendingWhitelist() {
-		return ListeningWhitelist.newBuilder().
-			priority(ListenerPriority.LOW).
-			types(PacketType.Play.Server.SPAWN_ENTITY).
-			gamePhase(GamePhase.BOTH).
-			options(new ListenerOptions[0]).
-			build();
-	}
+  @Override
+  public void onPacketReceiving(PacketEvent pe) {}
 
-	@Override
-	public ListeningWhitelist getReceivingWhitelist() {
-		return ListeningWhitelist.EMPTY_WHITELIST;
-	}
+  @Override
+  public ListeningWhitelist getSendingWhitelist() {
+    return ListeningWhitelist.newBuilder()
+        .priority(ListenerPriority.LOW)
+        .types(PacketType.Play.Server.SPAWN_ENTITY)
+        .gamePhase(GamePhase.BOTH)
+        .options(new ListenerOptions[0])
+        .build();
+  }
 
-	@Override
-	public Plugin getPlugin() {
-		return FramePicturePlugin.getPlugin();
-	}
+  @Override
+  public ListeningWhitelist getReceivingWhitelist() {
+    return ListeningWhitelist.EMPTY_WHITELIST;
+  }
 
+  @Override
+  public Plugin getPlugin() {
+    return FramePicturePlugin.getPlugin();
+  }
 }
