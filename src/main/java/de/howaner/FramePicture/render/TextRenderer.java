@@ -42,8 +42,7 @@ public class TextRenderer extends MapRenderer {
     BufferedImage image = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
     Graphics g = image.getGraphics();
     g.drawString(TextRenderer.this.text, 5, 12);
-    if (TextRenderer.this.mapId != null)
-      g.drawString("Map #" + TextRenderer.this.mapId.toString(), 70, 115);
+    if (TextRenderer.this.mapId != null) g.drawString("Map #" + TextRenderer.this.mapId, 70, 115);
 
     canvas.drawImage(0, 0, image);
   }

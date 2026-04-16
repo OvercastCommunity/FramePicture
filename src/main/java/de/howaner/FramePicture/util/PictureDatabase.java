@@ -6,6 +6,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +14,9 @@ import javax.imageio.ImageIO;
 import org.bukkit.Bukkit;
 
 public class PictureDatabase {
-  private final List<String> whileDownload = new ArrayList<String>();
-  private final List<Thread> threads = new ArrayList<Thread>();
-  private final List<Runnable> asyncRunnables = new ArrayList<Runnable>();
+  private final List<String> whileDownload = new ArrayList<>();
+  private final List<Thread> threads = new ArrayList<>();
+  private final List<Runnable> asyncRunnables = new ArrayList<>();
   private Integer scheduleID = null;
   private final File outputFolder = new File("plugins/FramePicture/images/");
 
@@ -29,13 +30,10 @@ public class PictureDatabase {
         Bukkit.getScheduler()
             .scheduleSyncRepeatingTask(
                 FramePicturePlugin.getPlugin(),
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    if (!PictureDatabase.this.asyncRunnables.isEmpty()) {
-                      for (Runnable run : PictureDatabase.this.asyncRunnables) run.run();
-                      PictureDatabase.this.asyncRunnables.clear();
-                    }
+                () -> {
+                  if (!PictureDatabase.this.asyncRunnables.isEmpty()) {
+                    for (Runnable run : PictureDatabase.this.asyncRunnables) run.run();
+                    PictureDatabase.this.asyncRunnables.clear();
                   }
                 },
                 5L,
@@ -72,7 +70,7 @@ public class PictureDatabase {
     File file = new File(outputFolder, String.format("%s.png", name));
     int i = 1;
     while (file.exists()) {
-      file = new File(outputFolder, String.format("%s_%s.png", name, String.valueOf(i)));
+      file = new File(outputFolder, String.format("%s_%s.png", name, i));
       i++;
     }
 
@@ -108,27 +106,27 @@ public class PictureDatabase {
           public void run() {
             try {
               // Generate Streams
-              URL url = new URL(path);
+              URL url = new URI(path).toURL();
               BufferedInputStream in = new BufferedInputStream(url.openStream());
               ByteArrayOutputStream out = new ByteArrayOutputStream();
 
               // Get File Informations
-              String fileName;
+              StringBuilder fileName;
               String fileEnding;
 
               if (path.contains("/")) {
                 String[] split = path.split("/");
-                fileName = split[split.length - 1];
+                fileName = new StringBuilder(split[split.length - 1]);
               } else {
-                fileName = "unknown.png";
+                fileName = new StringBuilder("unknown.png");
               }
-              if (fileName.contains(".")) {
-                String[] split = fileName.split("\\.");
+              if (fileName.toString().contains(".")) {
+                String[] split = fileName.toString().split("\\.");
 
-                fileName = "";
+                fileName = new StringBuilder();
                 for (int i = 0; i < split.length - 1; i++) {
-                  if (i != 0) fileName += '.';
-                  fileName += split[i];
+                  if (i != 0) fileName.append('.');
+                  fileName.append(split[i]);
                 }
 
                 fileEnding = split[split.length - 1];
@@ -153,9 +151,7 @@ public class PictureDatabase {
               int i = 1;
               while (outputFile.exists()) {
                 outputFile =
-                    new File(
-                        outputFolder,
-                        String.format("%s_%s.%s", fileName, String.valueOf(i), fileEnding));
+                    new File(outputFolder, String.format("%s_%s.%s", fileName, i, fileEnding));
                 i++;
               }
 
@@ -169,24 +165,12 @@ public class PictureDatabase {
               FramePicturePlugin.log.info("Image " + outputFile + " was downloaded!");
               final File of = outputFile;
               synchronized (PictureDatabase.this.asyncRunnables) {
-                PictureDatabase.this.asyncRunnables.add(
-                    new Runnable() {
-                      @Override
-                      public void run() {
-                        signal.downloadSuccess(of, false);
-                      }
-                    });
+                PictureDatabase.this.asyncRunnables.add(() -> signal.downloadSuccess(of, false));
               }
             } catch (final Exception ex) {
               FramePicturePlugin.log.warning("Cant download Image! Error: " + ex.getMessage());
               synchronized (PictureDatabase.this.asyncRunnables) {
-                PictureDatabase.this.asyncRunnables.add(
-                    new Runnable() {
-                      @Override
-                      public void run() {
-                        signal.downloadError(ex);
-                      }
-                    });
+                PictureDatabase.this.asyncRunnables.add(() -> signal.downloadError(ex));
               }
               ex.printStackTrace();
             }
@@ -210,8 +194,8 @@ public class PictureDatabase {
   }
 
   public interface FinishDownloadSignal {
-    public void downloadSuccess(File file, boolean wasLocal);
+    void downloadSuccess(File file, boolean wasLocal);
 
-    public void downloadError(Exception e);
+    void downloadError(Exception e);
   }
 }

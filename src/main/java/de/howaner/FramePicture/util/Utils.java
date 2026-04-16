@@ -120,7 +120,7 @@ public class Utils {
 
   public static void setPrivateField(Object instance, String fieldName, Object value) {
     try {
-      Class<? extends Object> c = instance.getClass();
+      Class<?> c = instance.getClass();
 
       Field field = c.getDeclaredField(fieldName);
       field.setAccessible(true);

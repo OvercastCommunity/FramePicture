@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import net.minecraft.server.v1_8_R3.DataWatcher;
 import net.minecraft.server.v1_8_R3.EntityItemFrame;
-import net.minecraft.server.v1_8_R3.MapIcon;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMap;
 import org.bukkit.Location;
@@ -141,7 +140,7 @@ public class Frame {
       RenderData data = this.getRenderData();
       this.cachedDataPacket =
           new PacketPlayOutMap(
-              this.getMapId(), (byte) 3, new ArrayList<MapIcon>(), data.buffer, 0, 0, 128, 128);
+              this.getMapId(), (byte) 3, new ArrayList<>(), data.buffer, 0, 0, 128, 128);
     }
 
     if (player != null) PacketSender.addPacketToQueue(player, this.cachedDataPacket);

@@ -24,13 +24,13 @@ public class ChunkListener implements Listener {
     Chunk chunk = event.getChunk();
     List<Frame> frames =
         this.manager.getFramesInChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
-    List<Frame> framesToRemove = new ArrayList<Frame>();
+    List<Frame> framesToRemove = new ArrayList<>();
 
     for (Frame frame : frames) {
       ItemFrame entity = Utils.getItemFrameFromChunk(chunk, frame.getLocation(), frame.getFacing());
       if (entity == null) {
         // The item frame doesn't exists. Remove it.
-        framesToRemove.remove(frame);
+        framesToRemove.add(frame);
         continue;
       }
       frame.setEntity(entity);

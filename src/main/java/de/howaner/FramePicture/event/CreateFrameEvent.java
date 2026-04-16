@@ -10,7 +10,7 @@ public class CreateFrameEvent extends Event implements Cancellable {
   private final Frame frame;
   private final ItemFrame entity;
   private boolean cancelled = false;
-  private static HandlerList handlerList = new HandlerList();
+  private static final HandlerList handlerList = new HandlerList();
 
   public CreateFrameEvent(Frame frame, ItemFrame entity) {
     this.frame = frame;

@@ -1,13 +1,12 @@
 package de.howaner.FramePicture.util;
 
-import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import net.minecraft.server.v1_8_R3.Packet;
 import org.bukkit.entity.Player;
 
 public class PacketSender implements Runnable {
-  private static final Queue<QueuedPacket> queue = new ConcurrentLinkedQueue<QueuedPacket>();
+  private static final Queue<QueuedPacket> queue = new ConcurrentLinkedQueue<>();
 
   @Override
   public void run() {
@@ -22,12 +21,7 @@ public class PacketSender implements Runnable {
 
   public static void removePlayerFromQueue(Player player) {
     synchronized (queue) {
-      Iterator<QueuedPacket> itr = queue.iterator();
-      while (itr.hasNext()) {
-        if (itr.next().player == player) {
-          itr.remove();
-        }
-      }
+      queue.removeIf(queuedPacket -> queuedPacket.player == player);
     }
   }
 

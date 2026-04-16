@@ -7,9 +7,9 @@ import java.util.Map;
 import org.bukkit.entity.Player;
 
 public class Cache {
-  private static Map<Player, String> createCache = new HashMap<Player, String>();
-  private static Map<Player, String> createMultiCache = new HashMap<Player, String>();
-  private static List<Player> removeCache = new ArrayList<Player>();
+  private static final Map<Player, String> createCache = new HashMap<>();
+  private static final Map<Player, String> createMultiCache = new HashMap<>();
+  private static final List<Player> removeCache = new ArrayList<>();
 
   /* Cache Creating */
   public static boolean hasCacheCreating(Player player) {

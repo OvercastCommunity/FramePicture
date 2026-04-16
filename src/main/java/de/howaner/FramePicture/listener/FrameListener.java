@@ -174,12 +174,6 @@ public class FrameListener implements Listener {
 
       int moveX, moveZ;
       switch (entity.getFacing()) {
-        case SOUTH:
-          {
-            moveX = 1;
-            moveZ = 0;
-            break;
-          }
         case EAST:
           {
             moveX = 0;
@@ -206,7 +200,7 @@ public class FrameListener implements Listener {
           }
       }
 
-      List<ItemFrame> frameList = new ArrayList<ItemFrame>();
+      List<ItemFrame> frameList = new ArrayList<>();
       World world = entity.getWorld();
       int x = entity.getLocation().getBlockX();
       int y = entity.getLocation().getBlockY();

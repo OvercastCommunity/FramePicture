@@ -26,7 +26,7 @@ public class FakeMapCanvas extends CraftMapCanvas {
   public CraftMapView getMapView() {
     return (CraftMapView)
         ((Bukkit.getMap((short) 0) == null)
-            ? Bukkit.createMap(Bukkit.getWorlds().get((short) 0))
+            ? Bukkit.createMap(Bukkit.getWorlds().getFirst())
             : Bukkit.getMap((short) 0));
   }
 

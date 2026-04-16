@@ -6,9 +6,9 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
 public class RemoveFrameEvent extends Event implements Cancellable {
-  private Frame frame;
+  private final Frame frame;
   private boolean cancelled = false;
-  private static HandlerList handlerList = new HandlerList();
+  private static final HandlerList handlerList = new HandlerList();
 
   public RemoveFrameEvent(Frame frame) {
     this.frame = frame;

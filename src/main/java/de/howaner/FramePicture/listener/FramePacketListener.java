@@ -65,31 +65,17 @@ public class FramePacketListener implements PacketListener {
 
       final Frame frameToSend = frame;
       Bukkit.getScheduler()
-          .runTaskLater(
-              FramePicturePlugin.getPlugin(),
-              new Runnable() {
-                @Override
-                public void run() {
-                  frameToSend.sendTo(player);
-                }
-              },
-              10L);
+          .runTaskLater(FramePicturePlugin.getPlugin(), () -> frameToSend.sendTo(player), 10L);
     }
   }
 
   private BlockFace convertDirectionToBlockFace(int direction) {
-    switch (direction) {
-      case 0:
-        return BlockFace.SOUTH;
-      case 1:
-        return BlockFace.WEST;
-      case 2:
-        return BlockFace.NORTH;
-      case 3:
-        return BlockFace.EAST;
-      default:
-        return BlockFace.NORTH;
-    }
+    return switch (direction) {
+      case 0 -> BlockFace.SOUTH;
+      case 1 -> BlockFace.WEST;
+      case 3 -> BlockFace.EAST;
+      default -> BlockFace.NORTH;
+    };
   }
 
   @Override

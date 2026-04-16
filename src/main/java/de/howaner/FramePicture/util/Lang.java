@@ -32,9 +32,9 @@ public enum Lang {
 
   private final String value;
   public static YamlConfiguration config = null;
-  public static File configFile = new File("plugins/FramePicture/messages.yml");
+  public static final File configFile = new File("plugins/FramePicture/messages.yml");
 
-  private Lang(final String value) {
+  Lang(final String value) {
     this.value = value;
   }
 

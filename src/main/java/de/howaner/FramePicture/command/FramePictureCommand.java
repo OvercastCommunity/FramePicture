@@ -17,7 +17,7 @@ import org.bukkit.entity.Player;
 
 public class FramePictureCommand implements CommandExecutor {
   private final FrameManager manager;
-  private static final Map<String, String> arguments = new HashMap<String, String>();
+  private static final Map<String, String> arguments = new HashMap<>();
 
   static {
     arguments.put("set", "handleSet");
@@ -56,11 +56,10 @@ public class FramePictureCommand implements CommandExecutor {
   }
 
   public void handleSet(CommandSender sender, String[] args) {
-    if (!(sender instanceof Player)) {
+    if (!(sender instanceof Player player)) {
       sender.sendMessage(Lang.PREFIX.getText() + Lang.NO_PLAYER.getText());
       return;
     }
-    Player player = (Player) sender;
 
     if (!player.hasPermission("FramePicture.set")) {
       player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
@@ -96,11 +95,10 @@ public class FramePictureCommand implements CommandExecutor {
   }
 
   public void handleMultiset(CommandSender sender, String[] args) {
-    if (!(sender instanceof Player)) {
+    if (!(sender instanceof Player player)) {
       sender.sendMessage(Lang.PREFIX.getText() + Lang.NO_PLAYER.getText());
       return;
     }
-    Player player = (Player) sender;
 
     if (!player.hasPermission("FramePicture.multiset")) {
       player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
@@ -146,11 +144,10 @@ public class FramePictureCommand implements CommandExecutor {
       return;
     }
 
-    if (!(sender instanceof Player)) {
+    if (!(sender instanceof Player player)) {
       sender.sendMessage(Lang.PREFIX.getText() + Lang.NO_PLAYER.getText());
       return;
     }
-    Player player = (Player) sender;
 
     if (!player.hasPermission("FramePicture.get")) {
       player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
@@ -172,8 +169,7 @@ public class FramePictureCommand implements CommandExecutor {
       return;
     }
 
-    if (sender instanceof Player) {
-      Player player = (Player) sender;
+    if (sender instanceof Player player) {
       if (!player.hasPermission("FramePicture.reload")) {
         player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
         return;
@@ -200,7 +196,7 @@ public class FramePictureCommand implements CommandExecutor {
     sender.sendMessage(Lang.PREFIX.getText() + Lang.PLUGIN_RELOAD.getText());
   }
 
-  public boolean sendHelp(CommandSender sender) {
+  public void sendHelp(CommandSender sender) {
     sender.sendMessage(ChatColor.GREEN + "Help from /FramePicture or /fp:");
     sender.sendMessage(
         "/FramePicture set <URL>  "
@@ -226,6 +222,5 @@ public class FramePictureCommand implements CommandExecutor {
             + "--"
             + ChatColor.WHITE
             + "  Reload the Config.");
-    return true;
   }
 }

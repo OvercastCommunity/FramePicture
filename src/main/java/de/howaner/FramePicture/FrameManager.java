@@ -39,7 +39,7 @@ import org.bukkit.inventory.ItemStack;
 public class FrameManager {
   public FramePicturePlugin p;
   public static File framesFile = new File("plugins/FramePicture/frames.yml");
-  private final Map<String, List<Frame>> frames = new HashMap<String, List<Frame>>();
+  private final Map<String, List<Frame>> frames = new HashMap<>();
   private PictureDatabase pictureDB;
 
   public FrameManager(FramePicturePlugin plugin) {
@@ -155,7 +155,7 @@ public class FrameManager {
   public List<Frame> getFramesInChunk(String world, int chunkX, int chunkZ) {
     List<Frame> frameList = this.frames.get(String.format("%s|%d|%d", world, chunkX, chunkZ));
     if (frameList == null) {
-      frameList = new ArrayList<Frame>();
+      frameList = new ArrayList<>();
     }
     return frameList;
   }
@@ -177,12 +177,11 @@ public class FrameManager {
 
     WorldServer worldServer = ((CraftWorld) entity.getWorld()).getHandle();
     EntityTracker tracker = worldServer.tracker;
-    EntityTrackerEntry trackerEntry =
-        (EntityTrackerEntry) tracker.trackedEntities.d(entity.getEntityId());
+    EntityTrackerEntry trackerEntry = tracker.trackedEntities.d(entity.getEntityId());
     if (trackerEntry == null) return;
 
-    for (Object playerNMS : trackerEntry.trackedPlayers) {
-      Player player = ((EntityPlayer) playerNMS).getBukkitEntity();
+    for (EntityPlayer playerNMS : trackerEntry.trackedPlayers) {
+      Player player = playerNMS.getBukkitEntity();
       frame.sendTo(player);
     }
   }
@@ -220,7 +219,7 @@ public class FrameManager {
   }
 
   public List<Frame> getFramesWithImage(String image) {
-    List<Frame> frameList = new ArrayList<Frame>();
+    List<Frame> frameList = new ArrayList<>();
     for (List<Frame> frames : this.frames.values()) {
       for (Frame frame : frames) {
         if (frame.getPicture().equals(image)) {
@@ -232,7 +231,7 @@ public class FrameManager {
   }
 
   public List<Frame> getFrames() {
-    List<Frame> frameList = new ArrayList<Frame>();
+    List<Frame> frameList = new ArrayList<>();
     for (List<Frame> frames : this.frames.values()) {
       frameList.addAll(frames);
     }
@@ -261,7 +260,7 @@ public class FrameManager {
     int width = img.getWidth() / vertical;
     int height = img.getHeight() / horizontal;
 
-    List<Frame> frameList = new ArrayList<Frame>();
+    List<Frame> frameList = new ArrayList<>();
     int globalId = this.getNewFrameID();
     int id = globalId;
     // y = Horizontal

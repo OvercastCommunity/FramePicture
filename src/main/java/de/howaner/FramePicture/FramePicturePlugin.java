@@ -22,7 +22,6 @@ public class FramePicturePlugin extends JavaPlugin {
       this.invalidBukkit = false;
     } catch (Exception e) {
       this.invalidBukkit = true;
-      return;
     }
   }
 
@@ -73,7 +72,7 @@ public class FramePicturePlugin extends JavaPlugin {
 
   public static WorldGuardPlugin getWorldGuard() {
     Plugin plugin = Bukkit.getPluginManager().getPlugin("WorldGuard");
-    if (plugin != null && plugin instanceof WorldGuardPlugin) return (WorldGuardPlugin) plugin;
+    if (plugin instanceof WorldGuardPlugin) return (WorldGuardPlugin) plugin;
     else return null;
   }
 
