@@ -3,7 +3,7 @@ version: ${project.version} (git-${git.commit.id.abbrev})
 author: ${project.author}
 website: ${project.website}
 description: ${project.description}
-depend: [ProtocolLib]
+depend: [packetevents]
 main: ${project.bukkit.main}
 
 commands:

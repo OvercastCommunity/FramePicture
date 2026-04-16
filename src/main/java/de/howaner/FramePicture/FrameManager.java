@@ -1,6 +1,6 @@
 package de.howaner.FramePicture;
 
-import com.comphenix.protocol.ProtocolLibrary;
+import com.github.retrooper.packetevents.PacketEvents;
 import de.howaner.FramePicture.command.FramePictureCommand;
 import de.howaner.FramePicture.listener.ChunkListener;
 import de.howaner.FramePicture.listener.FrameListener;
@@ -42,6 +42,8 @@ public class FrameManager {
   private final Map<String, List<Frame>> frames = new HashMap<>();
   private PictureDatabase pictureDB;
 
+  private FramePacketListener framePacketListener;
+
   public FrameManager(FramePicturePlugin plugin) {
     this.p = plugin;
   }
@@ -63,7 +65,8 @@ public class FrameManager {
 
     p.getCommand("FramePicture").setExecutor(new FramePictureCommand(this));
 
-    ProtocolLibrary.getProtocolManager().addPacketListener(new FramePacketListener());
+    this.framePacketListener = new FramePacketListener();
+    PacketEvents.getAPI().getEventManager().registerListener(this.framePacketListener);
 
     if (Config.FRAME_LOAD_ON_START) this.cacheFrames();
 
@@ -79,7 +82,7 @@ public class FrameManager {
       this.pictureDB.clear();
     }
 
-    ProtocolLibrary.getProtocolManager().removePacketListeners(this.p);
+    PacketEvents.getAPI().getEventManager().unregisterListener(this.framePacketListener);
     Bukkit.getScheduler().cancelTasks(this.p);
   }
 

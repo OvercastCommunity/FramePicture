@@ -1,13 +1,12 @@
 package de.howaner.FramePicture.listener;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.ListenerOptions;
-import com.comphenix.protocol.events.ListenerPriority;
-import com.comphenix.protocol.events.ListeningWhitelist;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.events.PacketListener;
-import com.comphenix.protocol.injector.GamePhase;
+import com.github.retrooper.packetevents.event.PacketListenerAbstract;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import de.howaner.FramePicture.FramePicturePlugin;
 import de.howaner.FramePicture.util.Frame;
 import de.howaner.FramePicture.util.Utils;
@@ -17,56 +16,43 @@ import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 
-public class FramePacketListener implements PacketListener {
+public class FramePacketListener extends PacketListenerAbstract {
+
+  public FramePacketListener() {
+    super(PacketListenerPriority.LOW);
+  }
 
   @Override
-  public void onPacketSending(PacketEvent pe) {
-    if (pe.getPacketType() == PacketType.Play.Server.SPAWN_ENTITY) {
-      PacketContainer packet = pe.getPacket();
-      final Player player = pe.getPlayer();
+  public void onPacketSend(PacketSendEvent event) {
+    if (event.getPacketType() != PacketType.Play.Server.SPAWN_ENTITY) return;
 
-      int entityID = packet.getIntegers().read(0);
-      Location loc =
-          new Location(
-              player.getWorld(),
-              ((double) packet.getIntegers().read(1) / 32.0D),
-              ((double) packet.getIntegers().read(2) / 32.0D),
-              ((double) packet.getIntegers().read(3) / 32.0D));
-      int entityType = packet.getIntegers().read(9);
-      int direction = packet.getIntegers().read(10);
+    var wrapper = new WrapperPlayServerSpawnEntity(event);
+    if (wrapper.getEntityType() != EntityTypes.ITEM_FRAME) return;
 
-      // Check if the entity is a item frame (Id 71)
-      if (entityType != 71) {
-        return;
-      }
+    Player player = event.getPlayer();
+    int entityID = wrapper.getEntityId();
+    Vector3d pos = wrapper.getPosition();
+    Location loc = new Location(player.getWorld(), pos.x, pos.y, pos.z);
+    int direction = wrapper.getData();
 
-      Chunk chunk = loc.getChunk();
-      if (!chunk.isLoaded()) {
-        return;
-      }
+    Chunk chunk = loc.getChunk();
+    if (!chunk.isLoaded()) return;
 
-      Frame frame = FramePicturePlugin.getManager().getFrameWithEntityID(chunk, entityID);
-      if (frame == null) {
-        // Search the frame in the chunk.
-        BlockFace facing = this.convertDirectionToBlockFace(direction);
-        ItemFrame entity = Utils.getItemFrameFromChunk(chunk, loc, facing);
-        if (entity == null) {
-          return;
-        }
+    Frame frame = FramePicturePlugin.getManager().getFrameWithEntityID(chunk, entityID);
+    if (frame == null) {
+      BlockFace facing = convertDirectionToBlockFace(direction);
+      ItemFrame entity = Utils.getItemFrameFromChunk(chunk, loc, facing);
+      if (entity == null) return;
 
-        frame = FramePicturePlugin.getManager().getFrame(loc, facing);
-        if (frame == null) {
-          return;
-        }
-        frame.setEntity(entity);
-      }
-
-      final Frame frameToSend = frame;
-      Bukkit.getScheduler()
-          .runTaskLater(FramePicturePlugin.getPlugin(), () -> frameToSend.sendTo(player), 10L);
+      frame = FramePicturePlugin.getManager().getFrame(loc, facing);
+      if (frame == null) return;
+      frame.setEntity(entity);
     }
+
+    final Frame frameToSend = frame;
+    Bukkit.getScheduler()
+        .runTaskLater(FramePicturePlugin.getPlugin(), () -> frameToSend.sendTo(player), 10L);
   }
 
   private BlockFace convertDirectionToBlockFace(int direction) {
@@ -76,28 +62,5 @@ public class FramePacketListener implements PacketListener {
       case 3 -> BlockFace.EAST;
       default -> BlockFace.NORTH;
     };
-  }
-
-  @Override
-  public void onPacketReceiving(PacketEvent pe) {}
-
-  @Override
-  public ListeningWhitelist getSendingWhitelist() {
-    return ListeningWhitelist.newBuilder()
-        .priority(ListenerPriority.LOW)
-        .types(PacketType.Play.Server.SPAWN_ENTITY)
-        .gamePhase(GamePhase.BOTH)
-        .options(new ListenerOptions[0])
-        .build();
-  }
-
-  @Override
-  public ListeningWhitelist getReceivingWhitelist() {
-    return ListeningWhitelist.EMPTY_WHITELIST;
-  }
-
-  @Override
-  public Plugin getPlugin() {
-    return FramePicturePlugin.getPlugin();
   }
 }

@@ -1,8 +1,7 @@
 package de.howaner.FramePicture.listener;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.events.PacketContainer;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import de.howaner.FramePicture.FrameManager;
 import de.howaner.FramePicture.util.Cache;
 import de.howaner.FramePicture.util.Frame;
@@ -37,7 +36,6 @@ public class FrameListener implements Listener {
     this.manager = manager;
   }
 
-  @SuppressWarnings("deprecation")
   @EventHandler(priority = EventPriority.HIGH)
   public void onPlayerInteract(PlayerInteractEntityEvent event) {
     if (event.isCancelled() || (event.getRightClicked().getType() != EntityType.ITEM_FRAME)) return;
@@ -271,7 +269,6 @@ public class FrameListener implements Listener {
     if (Cache.hasCacheGetting(player)) Cache.removeCacheGetting(player);
   }
 
-  @SuppressWarnings("deprecation")
   @EventHandler(priority = EventPriority.HIGH)
   public void onHangingBreak(HangingBreakEvent event) {
     if (event.isCancelled() || (event.getEntity().getType() != EntityType.ITEM_FRAME)) return;
@@ -317,13 +314,8 @@ public class FrameListener implements Listener {
   }
 
   public void sendFrameDestroy(Player player, int entityID) {
-    try {
-      PacketContainer destroyPacket =
-          ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ENTITY_DESTROY);
-      destroyPacket.getIntegerArrays().write(0, new int[] {entityID});
-      ProtocolLibrary.getProtocolManager().sendServerPacket(player, destroyPacket);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    PacketEvents.getAPI()
+        .getPlayerManager()
+        .sendPacket(player, new WrapperPlayServerDestroyEntities(entityID));
   }
 }
