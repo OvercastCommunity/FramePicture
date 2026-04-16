@@ -1,11 +1,11 @@
-name: FramePicture
-version: 1.8.7
-author: Howaner, m0bY_czE
-website: http://howaner.de
-description: You can set Pictures in Frames
+name: ${project.name}
+version: ${project.version} (git-${git.commit.id.abbrev})
+author: ${project.author}
+website: ${project.website}
+description: ${project.description}
 depend: [ProtocolLib]
-softdepend: [Vault,WorldGuard,Multiverse-Core]
-main: de.howaner.FramePicture.FramePicturePlugin
+softdepend: [Vault, WorldGuard, Multiverse-Core]
+main: ${project.bukkit.main}
 
 commands:
   FramePicture:
