@@ -65,18 +65,6 @@ public class FrameManager {
 
     ProtocolLibrary.getProtocolManager().addPacketListener(new FramePacketListener());
 
-    if (Config.MONEY_ENABLED && FramePicturePlugin.getEconomy() == null) {
-      FramePicturePlugin.log.warning("Vault not found. Money Support disabled!");
-      Config.MONEY_ENABLED = false;
-      Config.save();
-    }
-
-    if (Config.WORLDGUARD_ENABLED && FramePicturePlugin.getWorldGuard() == null) {
-      FramePicturePlugin.log.warning("WorldGuard not found. WorldGuard Support disabled!");
-      Config.WORLDGUARD_ENABLED = false;
-      Config.save();
-    }
-
     if (Config.FRAME_LOAD_ON_START) this.cacheFrames();
 
     Bukkit.getScheduler()

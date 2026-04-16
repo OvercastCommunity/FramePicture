@@ -4,7 +4,6 @@ author: ${project.author}
 website: ${project.website}
 description: ${project.description}
 depend: [ProtocolLib]
-softdepend: [Vault, WorldGuard, Multiverse-Core]
 main: ${project.bukkit.main}
 
 commands:
@@ -20,7 +19,6 @@ permissions:
       FramePicture.multiset: true
       FramePicture.get: true
       FramePicture.reload: true
-      FramePicture.ignoreWorldGuard: true
     default: op
   FramePicture.set:
     description: Permission to place a Picture in a Frame
@@ -33,7 +31,4 @@ permissions:
     default: true
   FramePicture.reload:
     description: Permission to reload the FramePicture config
-    default: op
-  FramePicture.ignoreWorldGuard:
-    description: Ignore WorldGuard Check
     default: op

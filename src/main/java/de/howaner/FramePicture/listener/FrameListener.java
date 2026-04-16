@@ -3,12 +3,8 @@ package de.howaner.FramePicture.listener;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
-import com.sk89q.worldguard.LocalPlayer;
-import com.sk89q.worldguard.protection.managers.RegionManager;
 import de.howaner.FramePicture.FrameManager;
-import de.howaner.FramePicture.FramePicturePlugin;
 import de.howaner.FramePicture.util.Cache;
-import de.howaner.FramePicture.util.Config;
 import de.howaner.FramePicture.util.Frame;
 import de.howaner.FramePicture.util.Lang;
 import de.howaner.FramePicture.util.PacketSender;
@@ -20,8 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
@@ -29,7 +23,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakEvent;
@@ -55,29 +48,10 @@ public class FrameListener implements Listener {
     if (Cache.hasCacheCreating(player)) {
       event.setCancelled(true);
 
-      if (Config.MONEY_ENABLED) {
-        if (FramePicturePlugin.getEconomy().getBalance(player) < Config.CREATE_PRICE) {
-          player.sendMessage(Lang.NOT_ENOUGH_MONEY.getText());
-          Cache.removeCacheCreating(player);
-          return;
-        }
-      }
-
       if (!player.hasPermission("FramePicture.set")) {
         player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
         Cache.removeCacheCreating(player);
         return;
-      }
-
-      if (Config.WORLDGUARD_ENABLED
-          && Config.WORLDGUARD_BUILD
-          && !player.hasPermission("FramePicture.ignoreWorldGuard")) {
-        RegionManager rm = FramePicturePlugin.getWorldGuard().getRegionManager(player.getWorld());
-        LocalPlayer localPlayer = FramePicturePlugin.getWorldGuard().wrapPlayer(player);
-        if (!rm.getApplicableRegions(entity.getLocation()).canBuild(localPlayer)) {
-          player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
-          return;
-        }
       }
 
       Frame frame = this.manager.getFrame(entity);
@@ -91,17 +65,6 @@ public class FrameListener implements Listener {
           new PictureDatabase.FinishDownloadSignal() {
             @Override
             public void downloadSuccess(File file, boolean wasLocal) {
-              if (Config.MONEY_ENABLED) {
-                if (FramePicturePlugin.getEconomy().getBalance(player) < Config.CREATE_PRICE) {
-                  if (!wasLocal
-                      && FrameListener.this.manager.getFramesWithImage(file.getName()).isEmpty()) {
-                    file.delete();
-                  }
-                  player.sendMessage(Lang.NOT_ENOUGH_MONEY.getText());
-                  return;
-                }
-              }
-
               Frame frame = FrameListener.this.manager.addFrame(file.getName(), entity);
               if (frame == null) {
                 player.sendMessage(
@@ -121,9 +84,6 @@ public class FrameListener implements Listener {
                           .replace("%url", path)
                           .replace("%id", String.valueOf(frame.getId()))
                           .replace("%name", file.getName()));
-
-              if (Config.MONEY_ENABLED)
-                FramePicturePlugin.getEconomy().withdrawPlayer(player, Config.CREATE_PRICE);
             }
 
             @Override
@@ -148,28 +108,9 @@ public class FrameListener implements Listener {
     else if (Cache.hasCacheMultiCreating(player)) {
       event.setCancelled(true);
 
-      if (Config.MONEY_ENABLED) {
-        if (FramePicturePlugin.getEconomy().getBalance(player) < Config.CREATE_PRICE) {
-          player.sendMessage(Lang.NOT_ENOUGH_MONEY.getText());
-          Cache.removeCacheCreating(player);
-          return;
-        }
-      }
-
       if (!player.hasPermission("FramePicture.multiset")) {
         player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
         return;
-      }
-
-      if (Config.WORLDGUARD_ENABLED
-          && Config.WORLDGUARD_BUILD
-          && !player.hasPermission("FramePicture.ignoreWorldGuard")) {
-        RegionManager rm = FramePicturePlugin.getWorldGuard().getRegionManager(player.getWorld());
-        LocalPlayer localPlayer = FramePicturePlugin.getWorldGuard().wrapPlayer(player);
-        if (!rm.getApplicableRegions(entity.getLocation()).canBuild(localPlayer)) {
-          player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
-          return;
-        }
       }
 
       int moveX, moveZ;
@@ -273,9 +214,6 @@ public class FrameListener implements Listener {
                       + Lang.MULTIFRAME_SET
                           .getText()
                           .replace("%amount", String.valueOf(frames.size())));
-
-              if (Config.MONEY_ENABLED)
-                FramePicturePlugin.getEconomy().withdrawPlayer(player, Config.CREATE_PRICE);
             }
 
             @Override
@@ -335,35 +273,6 @@ public class FrameListener implements Listener {
 
   @SuppressWarnings("deprecation")
   @EventHandler(priority = EventPriority.HIGH)
-  public void onBlockBreak(BlockBreakEvent event) {
-    Player player = event.getPlayer();
-    Block block = event.getBlock();
-    if (event.isCancelled() || !Config.WORLDGUARD_ENABLED || !Config.WORLDGUARD_BREAK) return;
-
-    RegionManager rm = FramePicturePlugin.getWorldGuard().getRegionManager(player.getWorld());
-    LocalPlayer localPlayer = FramePicturePlugin.getWorldGuard().wrapPlayer(player);
-
-    BlockFace[] faces = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
-
-    if (!player.hasPermission("FramePicture.ignoreWorldGuard")) {
-      for (BlockFace face : faces) {
-        Location loc = block.getRelative(face).getLocation();
-        BlockFace frameFace = face.getOppositeFace();
-
-        Frame frame = this.manager.getFrame(loc, frameFace);
-        if (frame == null) continue;
-
-        if (!rm.getApplicableRegions(frame.getLocation()).canBuild(localPlayer)) {
-          player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
-          event.setCancelled(true);
-          return;
-        }
-      }
-    }
-  }
-
-  @SuppressWarnings("deprecation")
-  @EventHandler(priority = EventPriority.HIGH)
   public void onHangingBreak(HangingBreakEvent event) {
     if (event.isCancelled() || (event.getEntity().getType() != EntityType.ITEM_FRAME)) return;
     ItemFrame entity = (ItemFrame) event.getEntity();
@@ -375,19 +284,6 @@ public class FrameListener implements Listener {
       Entity remover = ((HangingBreakByEntityEvent) event).getRemover();
       if (remover.getType() == EntityType.PLAYER) {
         player = (Player) remover;
-      }
-    }
-
-    if ((player != null)
-        && Config.WORLDGUARD_ENABLED
-        && Config.WORLDGUARD_BREAK
-        && !player.hasPermission("FramePicture.ignoreWorldGuard")) {
-      RegionManager rm = FramePicturePlugin.getWorldGuard().getRegionManager(player.getWorld());
-      LocalPlayer localPlayer = FramePicturePlugin.getWorldGuard().wrapPlayer(player);
-      if (!rm.getApplicableRegions(frame.getLocation()).canBuild(localPlayer)) {
-        player.sendMessage(Lang.PREFIX.getText() + Lang.NO_PERMISSION.getText());
-        event.setCancelled(true);
-        return;
       }
     }
 

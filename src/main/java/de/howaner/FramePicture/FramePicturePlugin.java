@@ -1,19 +1,14 @@
 package de.howaner.FramePicture;
 
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import de.howaner.FramePicture.util.Lang;
 import java.util.logging.Logger;
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class FramePicturePlugin extends JavaPlugin {
   public static Logger log;
   private static FrameManager manager = null;
   private static FramePicturePlugin instance;
-  private static Economy economy = null;
   private boolean invalidBukkit = false;
 
   private void checkBukkitVersion() {
@@ -48,7 +43,6 @@ public class FramePicturePlugin extends JavaPlugin {
     }
 
     if (manager == null) manager = new FrameManager(this);
-    this.setupEconomy();
     manager.onEnable();
     log.info(Lang.PLUGIN_ENABLED.getText());
   }
@@ -57,23 +51,6 @@ public class FramePicturePlugin extends JavaPlugin {
   public void onDisable() {
     if (manager != null) manager.onDisable();
     log.info(Lang.PLUGIN_DISABLED.getText());
-  }
-
-  public void setupEconomy() {
-    if (Bukkit.getPluginManager().getPlugin("Vault") == null) return;
-    RegisteredServiceProvider<Economy> economyProvider =
-        Bukkit.getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
-    if (economyProvider != null) economy = economyProvider.getProvider();
-  }
-
-  public static Economy getEconomy() {
-    return economy;
-  }
-
-  public static WorldGuardPlugin getWorldGuard() {
-    Plugin plugin = Bukkit.getPluginManager().getPlugin("WorldGuard");
-    if (plugin instanceof WorldGuardPlugin) return (WorldGuardPlugin) plugin;
-    else return null;
   }
 
   public static FramePicturePlugin getPlugin() {

@@ -77,13 +77,6 @@ public class FramePictureCommand implements CommandExecutor {
       return;
     }
 
-    if (Config.MONEY_ENABLED) {
-      if (!FramePicturePlugin.getEconomy().has(player, Config.CREATE_PRICE)) {
-        player.sendMessage(Lang.NOT_ENOUGH_MONEY.getText());
-        return;
-      }
-    }
-
     StringBuilder pathBuilder = new StringBuilder();
     for (int i = 1; i < args.length; i++) {
       if (i != 1) pathBuilder.append(" ");
@@ -119,13 +112,6 @@ public class FramePictureCommand implements CommandExecutor {
     if (Cache.hasCacheCreating(player) || Cache.hasCacheMultiCreating(player)) {
       player.sendMessage(Lang.PREFIX.getText() + Lang.ALREADY_SELECTION.getText());
       return;
-    }
-
-    if (Config.MONEY_ENABLED) {
-      if (!FramePicturePlugin.getEconomy().has(player, Config.CREATE_PRICE)) {
-        player.sendMessage(Lang.NOT_ENOUGH_MONEY.getText());
-        return;
-      }
     }
 
     StringBuilder pathBuilder = new StringBuilder();
@@ -181,15 +167,6 @@ public class FramePictureCommand implements CommandExecutor {
     Config.save();
     manager.loadFrames();
     manager.saveFrames();
-
-    if (Config.MONEY_ENABLED) {
-      FramePicturePlugin.getPlugin().setupEconomy();
-      if (FramePicturePlugin.getEconomy() == null) {
-        FramePicturePlugin.log.info("Vault not found! Money Support disabled!");
-        Config.MONEY_ENABLED = false;
-        Config.save();
-      }
-    }
 
     Lang.load();
     FramePicturePlugin.log.info("Plugin reloaded!");
