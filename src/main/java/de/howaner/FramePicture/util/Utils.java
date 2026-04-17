@@ -22,6 +22,7 @@ public class Utils {
 
   public static ItemFrame getItemFrameFromChunk(Chunk chunk, Location loc, BlockFace face) {
     for (Entity entity : chunk.getEntities()) {
+      if (entity == null) continue;
       if ((entity.getType() == EntityType.ITEM_FRAME)
           && isSameLocation(entity.getLocation(), loc)) {
         ItemFrame frameEntity = (ItemFrame) entity;
