@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -35,6 +36,8 @@ public class FrameManager {
   public FramePicturePlugin p;
   public static File framesFile = new File("plugins/FramePicture/frames.yml");
   private final Map<String, List<Frame>> frames = new HashMap<>();
+  private final Map<FrameKey, Frame> framesByKey = new ConcurrentHashMap<>();
+  private final Map<Integer, Frame> loadedFramesByEntityId = new ConcurrentHashMap<>();
   private PictureDatabase pictureDB;
 
   private FramePacketListener framePacketListener;
@@ -105,6 +108,9 @@ public class FrameManager {
   public void removeFrame(Frame frame) {
     if (frame == null) return;
 
+    this.unbindFrameEntity(frame);
+    this.framesByKey.remove(FrameKey.of(frame.getLocation(), frame.getFacing()));
+
     Chunk chunk = frame.getLocation().getChunk();
     List<Frame> frameList =
         this.getFramesInChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
@@ -125,17 +131,7 @@ public class FrameManager {
   }
 
   public Frame getFrame(Location loc, BlockFace face) {
-    Chunk chunk = loc.getChunk();
-    List<Frame> frameList =
-        this.getFramesInChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
-
-    for (Frame frame : frameList) {
-      if (Utils.isSameLocation(frame.getLocation(), loc)
-          && ((face == null) || (frame.getFacing() == face))) {
-        return frame;
-      }
-    }
-    return null;
+    return this.framesByKey.get(FrameKey.of(loc, face));
   }
 
   public List<Frame> getFramesInChunk(String world, int chunkX, int chunkZ) {
@@ -146,15 +142,8 @@ public class FrameManager {
     return frameList;
   }
 
-  public Frame getFrameWithEntityID(Chunk chunk, int entityId) {
-    List<Frame> frameList =
-        this.getFramesInChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
-    for (Frame frame : frameList) {
-      if (frame.isLoaded() && (frame.getEntity().getEntityId() == entityId)) {
-        return frame;
-      }
-    }
-    return null;
+  public Frame getFrameWithEntityID(int entityId) {
+    return this.loadedFramesByEntityId.get(entityId);
   }
 
   public void sendFrame(Frame frame) {
@@ -178,9 +167,12 @@ public class FrameManager {
   public Frame addFrame(String pictureURL, ItemFrame entity) {
     Frame frame =
         new Frame(this.getNewFrameID(), pictureURL, entity.getLocation(), entity.getFacing());
-    frame.setEntity(entity);
+    this.registerFrame(frame);
+    this.bindFrameEntity(frame, entity);
 
     if (frame.getBufferImage() == null) {
+      this.unbindFrameEntity(frame);
+      this.framesByKey.remove(FrameKey.of(frame.getLocation(), frame.getFacing()));
       return null;
     }
 
@@ -217,19 +209,9 @@ public class FrameManager {
   }
 
   public Frame getFrame(ItemFrame entity) {
-    for (List<Frame> frameList : this.frames.values()) {
-      for (Frame frame : frameList) {
-        if (frame.isLoaded()
-            && (frame.getLocation().getWorld() == entity.getWorld())
-            && (frame.getEntity().getEntityId() == entity.getEntityId())) {
-          return frame;
-        }
-      }
-    }
-    return null;
+    return this.loadedFramesByEntityId.get(entity.getEntityId());
   }
 
-  @SuppressWarnings("unused")
   public List<Frame> addMultiFrames(
       BufferedImage img, ItemFrame[] frames, int vertical, int horizontal) {
     if (frames.length == 0 || horizontal <= 0) return null;
@@ -256,7 +238,8 @@ public class FrameManager {
         if (frame != null) this.removeFrame(frame);
 
         frame = new Frame(globalId, file.getName(), entity.getLocation(), entity.getFacing());
-        frame.setEntity(entity);
+        this.registerFrame(frame);
+        this.bindFrameEntity(frame, entity);
 
         Chunk chunk = frame.getLocation().getChunk();
         List<Frame> chunkFrames =
@@ -277,6 +260,8 @@ public class FrameManager {
   public void loadFrames() {
     YamlConfiguration config = YamlConfiguration.loadConfiguration(framesFile);
     this.frames.clear();
+    this.framesByKey.clear();
+    this.loadedFramesByEntityId.clear();
 
     for (String key : config.getKeys(false)) {
       ConfigurationSection section = config.getConfigurationSection(key);
@@ -298,13 +283,14 @@ public class FrameManager {
 
       String picture = section.getString("Picture");
       Frame frame = new Frame(id, picture, loc, face);
+      this.registerFrame(frame);
       Chunk chunk = loc.getChunk();
 
       if (chunk.isLoaded()) {
         ItemFrame entity = Utils.getItemFrameFromChunk(chunk, loc, face);
         if (entity != null) {
           Utils.setFrameItemWithoutSending(entity, new ItemStack(Material.AIR));
-          frame.setEntity(entity);
+          this.bindFrameEntity(frame, entity);
           this.sendFrame(frame);
         }
       }
@@ -340,6 +326,30 @@ public class FrameManager {
       config.save(framesFile);
     } catch (IOException e) {
       FramePicturePlugin.log.log(Level.WARNING, "Error while saving the frames!", e);
+    }
+  }
+
+  public void registerFrame(Frame frame) {
+    this.framesByKey.put(FrameKey.of(frame.getLocation(), frame.getFacing()), frame);
+  }
+
+  public void bindFrameEntity(Frame frame, ItemFrame entity) {
+    this.unbindFrameEntity(frame);
+    frame.setEntity(entity);
+    this.loadedFramesByEntityId.put(entity.getEntityId(), frame);
+  }
+
+  public void unbindFrameEntity(Frame frame) {
+    if (!frame.isLoaded()) return;
+
+    this.loadedFramesByEntityId.remove(frame.getEntity().getEntityId());
+    frame.setEntity(null);
+  }
+
+  public record FrameKey(String world, int x, int y, int z, BlockFace facing) {
+    public static FrameKey of(Location loc, BlockFace facing) {
+      return new FrameKey(
+          loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), facing);
     }
   }
 }

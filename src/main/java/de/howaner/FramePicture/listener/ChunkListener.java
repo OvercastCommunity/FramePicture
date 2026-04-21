@@ -33,15 +33,14 @@ public class ChunkListener implements Listener {
         framesToRemove.add(frame);
         continue;
       }
-      frame.setEntity(entity);
+      this.manager.bindFrameEntity(frame, entity);
     }
 
     if (!framesToRemove.isEmpty()) {
       for (Frame frame : framesToRemove) {
         frame.clearCache();
-        frames.remove(frame);
+        this.manager.removeFrame(frame);
       }
-      this.manager.setFramesInChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), frames);
     }
   }
 
@@ -53,7 +52,7 @@ public class ChunkListener implements Listener {
         this.manager.getFramesInChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
 
     for (Frame frame : frames) {
-      frame.setEntity(null);
+      this.manager.unbindFrameEntity(frame);
     }
   }
 }
