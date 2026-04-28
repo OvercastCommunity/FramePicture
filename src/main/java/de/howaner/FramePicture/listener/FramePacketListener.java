@@ -9,10 +9,12 @@ import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import de.howaner.FramePicture.FramePicturePlugin;
 import de.howaner.FramePicture.util.Frame;
+import de.howaner.FramePicture.util.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 
 public class FramePacketListener extends PacketListenerAbstract {
@@ -42,6 +44,11 @@ public class FramePacketListener extends PacketListenerAbstract {
       BlockFace facing = convertDirectionToBlockFace(direction);
       frame = FramePicturePlugin.getManager().getFrame(loc, facing);
       if (frame == null) return;
+
+      ItemFrame entity = Utils.getItemFrameFromChunk(chunk, loc, facing);
+      if (entity == null) return;
+
+      FramePicturePlugin.getManager().bindFrameEntity(frame, entity);
     }
 
     final Frame frameToSend = frame;
