@@ -1,11 +1,8 @@
 package de.howaner.FramePicture.util;
 
-import de.howaner.FramePicture.FramePicturePlugin;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.lang.reflect.Field;
-import java.util.logging.Level;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
@@ -88,17 +85,5 @@ public class Utils {
 
   public static int diff(int v1, int v2) {
     return Math.abs(v1 - v2);
-  }
-
-  public static void setPrivateField(Object instance, String fieldName, Object value) {
-    try {
-      Class<?> c = instance.getClass();
-
-      Field field = c.getDeclaredField(fieldName);
-      field.setAccessible(true);
-      field.set(instance, value);
-    } catch (Exception ex) {
-      FramePicturePlugin.getPlugin().getLogger().log(Level.WARNING, "Can't set private field", ex);
-    }
   }
 }

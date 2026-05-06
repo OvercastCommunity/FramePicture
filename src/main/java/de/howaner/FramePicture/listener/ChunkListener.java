@@ -29,7 +29,7 @@ public class ChunkListener implements Listener {
     for (Frame frame : frames) {
       ItemFrame entity = Utils.getItemFrameFromChunk(chunk, frame.getLocation(), frame.getFacing());
       if (entity == null) {
-        // The item frame doesn't exists. Remove it.
+        // The item frame doesn't exist. Remove it.
         framesToRemove.add(frame);
         continue;
       }

@@ -4,7 +4,6 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMapData;
 import de.howaner.FramePicture.FramePicturePlugin;
 import de.howaner.FramePicture.render.ImageRenderer;
 import de.howaner.FramePicture.render.TextRenderer;
@@ -27,8 +26,8 @@ public class Frame {
   private final BlockFace face;
   private final Location loc;
   private final String picture;
-  private WrapperPlayServerEntityMetadata cachedItemPacket = null;
-  private WrapperPlayServerMapData cachedDataPacket = null;
+  private List<EntityData<?>> cachedItemMetadata = null;
+  private byte[] cachedMapData = null;
 
   public Frame(final int id, String picture, Location loc, BlockFace face) {
     this.id = id;
@@ -67,12 +66,12 @@ public class Frame {
 
   public void setEntity(ItemFrame entity) {
     this.entity = entity;
-    this.cachedItemPacket = null;
+    this.cachedItemMetadata = null;
   }
 
   public void clearCache() {
-    this.cachedDataPacket = null;
-    this.cachedItemPacket = null;
+    this.cachedMapData = null;
+    this.cachedItemMetadata = null;
   }
 
   public BufferedImage getBufferImage() {
@@ -104,32 +103,30 @@ public class Frame {
   private void sendItemMeta(Player player) {
     if (!this.isLoaded()) return;
 
-    if (this.cachedItemPacket == null) {
+    if (this.cachedItemMetadata == null) {
       ItemStack item = new ItemStack(Material.MAP);
       item.setDurability(this.getMapId());
 
-      List<EntityData<?>> metadata = new ArrayList<>();
-      metadata.add(
+      this.cachedItemMetadata = new ArrayList<>();
+      this.cachedItemMetadata.add(
           new EntityData<>(
               8, EntityDataTypes.ITEMSTACK, SpigotConversionUtil.fromBukkitItemStack(item)));
-
-      this.cachedItemPacket =
-          new WrapperPlayServerEntityMetadata(this.entity.getEntityId(), metadata);
     }
 
     if (player != null)
-      PacketEvents.getAPI().getPlayerManager().sendPacket(player, this.cachedItemPacket);
+      PacketEvents.getAPI()
+          .getPlayerManager()
+          .sendPacketSilently(
+              player,
+              new WrapperPlayServerEntityMetadata(this.entity.getEntityId(), cachedItemMetadata));
   }
 
   private void sendMapData(Player player) {
-    if (this.cachedDataPacket == null) {
-      byte[] data = this.getRenderBuffer();
-      this.cachedDataPacket =
-          new WrapperPlayServerMapData(
-              this.getMapId(), (byte) 3, false, false, null, 128, 128, 0, 0, data);
+    if (this.cachedMapData == null) {
+      this.cachedMapData = this.getRenderBuffer();
     }
 
-    if (player != null) PacketSender.addPacketToQueue(player, this.cachedDataPacket);
+    if (player != null) PacketSender.addPacketToQueue(player, this.getMapId(), this.cachedMapData);
   }
 
   public MapRenderer generateRenderer() {

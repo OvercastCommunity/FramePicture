@@ -20,10 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
-import net.minecraft.server.v1_8_R3.EntityPlayer;
-import net.minecraft.server.v1_8_R3.EntityTracker;
-import net.minecraft.server.v1_8_R3.EntityTrackerEntry;
-import net.minecraft.server.v1_8_R3.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -32,12 +28,15 @@ import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 public class FrameManager {
+  private static final double DEFAULT_MISC_TRACKING_RANGE = 32.0;
+
   public FramePicturePlugin p;
   public static File framesFile = new File("plugins/FramePicture/frames.yml");
   private final Map<String, List<Frame>> frames = new HashMap<>();
@@ -160,15 +159,24 @@ public class FrameManager {
     if (!frame.isLoaded()) return;
 
     ItemFrame entity = frame.getEntity();
-    WorldServer worldServer = ((CraftWorld) entity.getWorld()).getHandle();
-    EntityTracker tracker = worldServer.tracker;
-    EntityTrackerEntry trackerEntry = tracker.trackedEntities.d(entity.getEntityId());
-    if (trackerEntry == null) return;
-
-    for (EntityPlayer playerNMS : trackerEntry.trackedPlayers) {
-      Player player = playerNMS.getBukkitEntity();
-      frame.sendTo(player);
+    double radius = getMiscTrackingRange(entity.getWorld());
+    double verticalRadius = entity.getWorld().getMaxHeight();
+    for (Entity nearby : entity.getNearbyEntities(radius, verticalRadius, radius)) {
+      if (nearby.getType() == EntityType.PLAYER) {
+        frame.sendTo((Player) nearby);
+      }
     }
+  }
+
+  private double getMiscTrackingRange(World world) {
+    YamlConfiguration spigotConfig = Bukkit.spigot().getSpigotConfig();
+    String trackingRangePath = "world-settings." + world.getName() + ".entity-tracking-range.misc";
+    double defaultTrackingRange =
+        spigotConfig.getDouble(
+            "world-settings.default.entity-tracking-range.misc", DEFAULT_MISC_TRACKING_RANGE);
+    double trackingRange = spigotConfig.getDouble(trackingRangePath, defaultTrackingRange);
+    double viewDistanceRange = Math.max(0.0, Bukkit.getViewDistance() * 16.0 - 16.0);
+    return Math.min(trackingRange, viewDistanceRange);
   }
 
   public int getNewFrameID() {
@@ -240,7 +248,6 @@ public class FrameManager {
 
     List<Frame> frameList = new ArrayList<>();
     int globalId = this.getNewFrameID();
-    int id = globalId;
     // y = Horizontal
     for (int y = 0; y < horizontal; y++) {
       // x = Vertical

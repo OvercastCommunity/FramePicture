@@ -31,6 +31,8 @@ public class FramePacketListener extends PacketListenerAbstract {
     if (wrapper.getEntityType() != EntityTypes.ITEM_FRAME) return;
 
     Player player = event.getPlayer();
+    if (player == null || !player.isOnline()) return;
+
     int entityID = wrapper.getEntityId();
     Vector3d pos = wrapper.getPosition();
     Location loc = new Location(player.getWorld(), pos.x, pos.y, pos.z);

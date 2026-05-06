@@ -16,6 +16,7 @@ public class Config {
   public static boolean FRAME_LOAD_ON_START = true;
   public static long FRAME_LOADING_DELAY = 1L;
   public static int FRAME_LOADS_PER_TICK = 5;
+  public static int FRAME_MAX_LOADS_PER_TICK = 100;
   // File
   public static File configFile = new File("plugins/FramePicture/config.yml");
 
@@ -34,6 +35,9 @@ public class Config {
       FRAME_LOADING_DELAY = Math.max(config.getLong("FrameLoader.TickDelay"), 1L);
     if (config.isInt("FrameLoader.LoadsPerTick"))
       FRAME_LOADS_PER_TICK = Math.max(config.getInt("FrameLoader.LoadsPerTick"), 1);
+    if (config.isInt("FrameLoader.MaxLoadsPerTick"))
+      FRAME_MAX_LOADS_PER_TICK =
+          Math.max(config.getInt("FrameLoader.MaxLoadsPerTick"), FRAME_LOADS_PER_TICK);
 
     FramePicturePlugin.log.info("Configuration loaded!");
   }
@@ -49,6 +53,7 @@ public class Config {
     config.set("Frame.CacheOnStart", FRAME_LOAD_ON_START);
     config.set("FrameLoader.TickDelay", FRAME_LOADING_DELAY);
     config.set("FrameLoader.LoadsPerTick", FRAME_LOADS_PER_TICK);
+    config.set("FrameLoader.MaxLoadsPerTick", FRAME_MAX_LOADS_PER_TICK);
     try {
       config.save(configFile);
     } catch (Exception e) {
